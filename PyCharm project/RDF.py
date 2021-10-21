@@ -1,18 +1,20 @@
 import numpy as np
 from numba import jit, prange
-from numba.typed import List
+from time import time
 
 def rdf_setup(xyz_file_path):
 
-    with open(xyz_file_path, "r") as xyz:
-        num_xyz = xyz.readline()
-        mof_name = xyz.readline()
+    # with open(xyz_file_path, "r") as xyz:
+    #     num_xyz = xyz.readline()
+    #     mof_name = xyz.readline()
+    #
+    #     xyz_array = np.array(xyz.readline().split(), ndmin=2)
+    #     print("ok")
+    #     for line in xyz:
+    #         array_to_join = np.array(line.split(), ndmin=2) ##<== the slow step is np.array
+    #         xyz_array = np.concatenate((xyz_array, array_to_join), axis=0)
 
-        xyz_array = np.array(xyz.readline().split(), ndmin=2)
-
-        for line in xyz:
-            array_to_join = np.array(line.split(), ndmin=2)
-            xyz_array = np.concatenate((xyz_array, array_to_join), axis=0)
+    xyz_array = np.loadtxt("ZIF-20.xyz", dtype=str,skiprows=2)
 
     xyz_array_float = xyz_array[:, 1:4].astype(np.double)
 
@@ -21,6 +23,7 @@ def rdf_setup(xyz_file_path):
 
     xyz_array_float_stacked = np.array(xyz_array_float[0:27, :], ndmin=3)
     xyz_array_float_stacked = np.swapaxes(xyz_array_float_stacked, 0, 1)
+
     for t in range(1, length_one_unit_cell):
         array_to_join = np.array(xyz_array_float[t*27:(t+1)*27, :], ndmin=3)
         array_to_join = np.swapaxes(array_to_join, 0, 1)
@@ -36,7 +39,7 @@ def rdf_single_R(length_one_unit_cell, xyz_array_float_stacked, R, B, Pi, Pj):
     sum_RDF = 0
 
     for i in prange(0, length_one_unit_cell):
-        for j in range(0, length_one_unit_cell):
+        for j in prange(0, length_one_unit_cell):
             if j > i:
                 r = 1000
                 for k in range(0, 27):
@@ -48,14 +51,13 @@ def rdf_single_R(length_one_unit_cell, xyz_array_float_stacked, R, B, Pi, Pj):
                 sum_RDF += summand
 
         # if i%100 == 0:
-        #     print(i)
+        #      print(i)
     return sum_RDF
 
 
 
 @jit(nopython=True, parallel=True)
 def rdf(RDF,length_one_unit_cell, xyz_array_float_stacked, Rs, B, Pi, Pj):
-
     for R_index in prange(0, len(Rs)):
         RDF_single_R=rdf_single_R(length_one_unit_cell, xyz_array_float_stacked, Rs[R_index], 10, 1, 1)
         RDF[R_index,0] = Rs[R_index]
@@ -63,15 +65,5 @@ def rdf(RDF,length_one_unit_cell, xyz_array_float_stacked, Rs, B, Pi, Pj):
         print(R_index)
     return RDF
 
-Rs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-#Rs = [2]
-
-#Makes a typed.List as lists are deprecating in Numba
-typed_Rs = List()
-[typed_Rs.append(x) for x in Rs]
-
-RDF = np.empty([len(typed_Rs), 2])
-length_one_unit_cell, xyz_array_float_stacked = rdf_setup("./IRMOF-1.xyz")
-RDF = rdf(RDF,length_one_unit_cell, xyz_array_float_stacked, typed_Rs, 10, 1, 1)
 
 
