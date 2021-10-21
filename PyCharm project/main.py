@@ -1,7 +1,7 @@
 import subprocess
 
 from utils.preprocess import write_raspa_input_file
-from utils.preprocess import raspa_create_cif
+from utils.preprocess import raspa_clean_up
 
 
 def main():
@@ -13,7 +13,8 @@ def main():
     output_files_directory = "../Outputs"
     path_to_raspa = "./Raspa_simulate"
 
-    mof_name = "graphite"
+    mof_name = "IRMOF-1"
+    unit_cells = [3, 3, 3]
 
     ##### At some point, make the above into separate file ########
 
@@ -26,7 +27,7 @@ def main():
         print_every=1,
         framework=0,
         framework_name=mof_name,
-        unit_cells=[1, 1, 1]
+        unit_cells=unit_cells
     )
 
 
@@ -35,7 +36,7 @@ def main():
     print([path_to_raspa, sim_input_file_path])
     subprocess.run([path_to_raspa, sim_input_file_path])
 
-    cif_dest_path, xyz_dest_path = raspa_create_cif(mof_name)
+    cif_dest_path, xyz_dest_path = raspa_clean_up(mof_name, unit_cells)
 
     print("==================RUNNING OBABEL==================")
 

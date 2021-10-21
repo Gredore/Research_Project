@@ -24,7 +24,7 @@ def write_raspa_input_file(simulation_type, number_of_cycles, print_every, frame
     return simulation_file_name
     # return (molecule_name_list, unit_cells)
 
-def raspa_create_cif(mof_name):
+def raspa_clean_up(mof_name, unit_cells):
     ##This function is called after RASPA is run to clean up the output files so only the supercell cif is left behind.
     shutil.rmtree("VTK")
     shutil.rmtree("Restart")
@@ -34,14 +34,14 @@ def raspa_create_cif(mof_name):
     if not os.path.exists(raspa_output_folder_path):
         os.makedirs(raspa_output_folder_path)
 
-    cif_filename = "Framework_0_initial_1_1_1_P1.cif"
+    cif_filename = "Framework_0_initial_"+str(unit_cells[0])+"_"+str(unit_cells[1])+"_"+str(unit_cells[2])+"_P1.cif"
     cif_src_path = os.path.join("Movies/System_0/", cif_filename)
 
     cif_dest_path = os.path.join(raspa_output_folder_path, f"{mof_name}.cif")
     xyz_dest_path = os.path.join(raspa_output_folder_path, f"{mof_name}.xyz")
 
     for filename in os.listdir("Movies/System_0"):
-        if filename.endswith("Framework_0_initial_1_1_1_P1.cif"):
+        if filename.endswith("Framework_0_initial_"+str(unit_cells[0])+"_"+str(unit_cells[1])+"_"+str(unit_cells[2])+"_P1.cif"):
             shutil.copy(cif_src_path, cif_dest_path)
 
     shutil.rmtree("Movies")
