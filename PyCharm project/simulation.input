@@ -1,7 +1,0 @@
-SimulationType     MonteCarlo
-NumberofCycles     0
-PrintEvery     1
-
-Framework      0
-FrameworkName      IRMOF-1
-UnitCells      3 3 3
