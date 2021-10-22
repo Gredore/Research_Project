@@ -14,7 +14,7 @@ def rdf_setup(xyz_file_path):
     #         array_to_join = np.array(line.split(), ndmin=2) ##<== the slow step is np.array
     #         xyz_array = np.concatenate((xyz_array, array_to_join), axis=0)
 
-    xyz_array = np.loadtxt("ZIF-20.xyz", dtype=str,skiprows=2)
+    xyz_array = np.loadtxt(xyz_file_path, dtype=str,skiprows=2)
 
     xyz_array_float = xyz_array[:, 1:4].astype(np.double)
 
@@ -66,4 +66,25 @@ def rdf(RDF,length_one_unit_cell, xyz_array_float_stacked, Rs, B, Pi, Pj):
     return RDF
 
 
+
+@jit(nopython=True, parallel=True)
+def rdf2(RDF, length_one_unit_cell, xyz_array_float_stacked, Rs, B, Pi, Pj):
+    for i in prange(0, length_one_unit_cell):
+        for j in prange(0, length_one_unit_cell):
+            if j > i:
+                r = 1000
+                for k in range(0, 27):
+                    # for k in range(13, 14):
+                    euclid_dist = np.linalg.norm(
+                        xyz_array_float_stacked[13, i, 0:3] - xyz_array_float_stacked[k, j, 0:3])
+                    if euclid_dist < r:
+                        r = euclid_dist
+
+                for R_index in range(0, len(Rs)):
+                    R = Rs[R_index]
+                    summand = Pi * Pj * np.exp(-B * ((r - R) ** 2))
+                    RDF[R_index] = RDF[R_index] + summand
+
+
+    return RDF
 
