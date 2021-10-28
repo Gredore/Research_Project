@@ -37,12 +37,16 @@ def main(mof_name, num_sample_rs, property_index):
     print("######### RDF Calculations - Calculating RDF")
     RDF = rdf(RDF, length_one_unit_cell, xyz_array_float_stacked, typed_Rs, 10, all_unit_cell_property_vectors[:,property_index])
 
+    RDF_scaled = RDF.copy()
+    RDF_scaled[:, 1] = -1 + ((RDF[:, 1] - np.min(RDF[:, 1])) * 2 / (np.max(RDF[:, 1]) - np.min(RDF[:, 1])))
+
     #f = time.time()
     #print(f-s)
     print("######### Successfully calculated RDF")
 
-    return RDF
+    return RDF_scaled
 #if __name__ == "__main__":
 
-RDF = main("MIL-47", 300, 0)
+RDF_scaled = main("ZIF-20", 300, 2)
 #Fourier_RDF = np.real(np.fft.rfft(RDF[:,1], axis=0))
+
