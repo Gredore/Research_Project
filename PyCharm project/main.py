@@ -2,6 +2,7 @@ from cif_to_xyz_diffpy import run_cif_to_xyz_diffpy
 from RDF import *
 import numpy as np
 from numba.typed import List
+import matplotlib.pyplot as plt
 import time
 
 def main(mof_name, num_sample_rs, property_index):
@@ -47,6 +48,11 @@ def main(mof_name, num_sample_rs, property_index):
     return RDF_scaled
 #if __name__ == "__main__":
 
-RDF_scaled = main("ZIF-20", 300, 2)
-#Fourier_RDF = np.real(np.fft.rfft(RDF[:,1], axis=0))
-
+RDF_scaled0 = main("weird", 300, 0)
+# RDF_scaled1 = main("IRMOF-1", 300, 1)
+# RDF_scaled3 = main("IRMOF-1", 300, 3)
+#Fourier_RDF = np.real(np.fft.rfft(RDF_scaled[:,1], axis=0))
+plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1])
+# plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled1[:,1])
+# plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled3[:,1])
+plt.show()
