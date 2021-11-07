@@ -48,7 +48,7 @@ def main(mof_name, num_sample_rs, property_index):
     return RDF_scaled
 #if __name__ == "__main__":
 
-RDF_scaled0 = main("WEVYEE", 300, 0)
+RDF_scaled0 = main("LUQGAG", 300, 0)
 # RDF_scaled1 = main("IRMOF-1", 300, 1)
 # RDF_scaled3 = main("IRMOF-1", 300, 3)
 #Fourier_RDF = np.real(np.fft.rfft(RDF_scaled[:,1], axis=0))
