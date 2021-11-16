@@ -12,9 +12,9 @@ import os
 name_list = []
 
 with open(input_names_path) as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    for row in csv_reader:
-    	name_list.append(row[0])
+	csv_reader = csv.reader(csv_file, delimiter=',')
+	for row in csv_reader:
+		name_list.append(row[0])
 
 csd_reader = io.CrystalReader('CSD')
 
@@ -26,6 +26,6 @@ for name in name_list:
 		io.CrystalWriter(os.path.join(output_folder_path + name + '.cif')).write(crystal)
 	except:
 		print(name + ' has failed.')
-	
-	
+
+
 

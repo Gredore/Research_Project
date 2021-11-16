@@ -47,8 +47,8 @@ def rdf_setup(xyz_array_float, xyz_array_float_stacked, length_one_unit_cell, un
 
 
 @jit(nopython=True, parallel=True)
-def rdf(RDF, length_one_unit_cell, xyz_array_float_stacked, Rs, B, property_vector):
-    print("######### RDF Calculations - 10 chunk complete messages expected:")
+def rdf(RDF, length_one_unit_cell, xyz_array_float_stacked, Rs, B, property_vector, progress_proxy):
+    #print(" -  RDF Calculations - 10 chunk complete messages expected:")
     for i in prange(0, length_one_unit_cell):
 
         for j in prange(0, length_one_unit_cell):
@@ -67,8 +67,9 @@ def rdf(RDF, length_one_unit_cell, xyz_array_float_stacked, Rs, B, property_vect
                     RDF[R_index, 1] = RDF[R_index,1] + summand
                     RDF[R_index, 0] = R
 
-        if i % int(length_one_unit_cell / 10) == 0:
-            print("######### RDF Calculations - Completed chunk (", i, ")")
+        #if i % int(length_one_unit_cell / 10) == 0:
+            #print(" -  RDF Calculations - Completed chunk (", i, ")")
 
+        progress_proxy.update(1)
     return RDF
 
