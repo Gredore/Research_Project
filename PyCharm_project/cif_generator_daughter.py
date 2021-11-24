@@ -20,6 +20,7 @@ csd_reader = io.CrystalReader('CSD')
 
 #print(name_list)
 
+previous_file_count = ""
 for name in name_list:
 	try:
 		crystal  = csd_reader.crystal(name)
@@ -27,5 +28,11 @@ for name in name_list:
 	except:
 		print(name + ' has failed.')
 
+	path, dirs, files = next(os.walk(output_folder_path))
+	file_count = len(files)
 
+	if file_count == previous_file_count:
+		print(name)
+
+	previous_file_count = file_count
 
