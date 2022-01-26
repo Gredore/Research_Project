@@ -79,11 +79,11 @@ with open('input_names_reduced.csv') as csv_file:
 #name_list = [name_list[0]]
 for iteration, name in enumerate(name_list):
     print('\033[0m\033[1m'+"Current MOF: " + name + " (" + str(iteration) + " / " + str(len(name_list)-1) +  ")" + '\033[0m \033[3m\033[2m')
-    #name = 'BOHKAM'
+    ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index)
     RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 200, 0)
-    np.savetxt(name + '.csv', RDF_scaled0, delimiter=',')
+    np.savetxt(rdf_path + name + '.csv', RDF_scaled0, delimiter=',')
     #delete_last_lines(19)
-    print('\033[0m\033[1m' + "Completed MOF: " + name + " (" + str(iteration) + " / " + str(len(name_list)) + ")")
+    print('\033[0m\033[1m' + "Completed MOF: " + name + " (" + str(iteration+1) + " / " + str(len(name_list)) + ")")
 
 print('\033[0m\033[1m' + "Finished.")
 # RDF_scaled1 = main("IRMOF-1", 300, 1)

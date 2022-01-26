@@ -14,7 +14,7 @@ name_list = []
 with open(input_names_path) as csv_file:
 	csv_reader = csv.reader(csv_file, delimiter=',')
 	for row in csv_reader:
-		name_list.append(row[0])
+		name_list.append(row)
 
 csd_reader = io.CrystalReader('CSD')
 
@@ -23,8 +23,9 @@ csd_reader = io.CrystalReader('CSD')
 previous_file_count = ""
 for name in name_list:
 	try:
-		crystal  = csd_reader.crystal(name)
-		io.CrystalWriter(os.path.join(output_folder_path + name + '.cif')).write(crystal)
+		name_csd = name[0]
+		crystal  = csd_reader.crystal(name_csd)
+		io.CrystalWriter(os.path.join(output_folder_path + name[1] + '.cif')).write(crystal)
 	except:
 		print(name + ' has failed.')
 
