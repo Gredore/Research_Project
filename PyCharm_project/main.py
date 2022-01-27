@@ -14,7 +14,7 @@ def delete_last_lines(n):
         sys.stdout.write('\x1b[1A')
         sys.stdout.write('\x1b[2K')
 
-def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
+def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property_index):
 
     s = time.time()
 
@@ -30,7 +30,7 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
 
     print(" -  Successfully converted .cif to .xyz")
 
-    Rs = np.linspace(0, 30, num=num_sample_rs)
+    Rs = np.linspace(0, largest_r, num=num_sample_rs)
 
     # Makes a typed.List as lists are deprecating in Numba
     typed_Rs = List()
@@ -48,6 +48,11 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
     all_unit_cell_property_vectors = np.zeros(shape=[length_one_unit_cell,np.shape(all_element_property_vectors)[1]-1])
     print(" -  RDF Calculations - Stacking adjacent unit cells")
     xyz_array_float_stacked, unit_cell_atoms, all_unit_cell_property_vectors = rdf_setup(xyz_array_float, xyz_array_float_stacked, length_one_unit_cell, unit_cell_atoms, atoms, all_element_property_vectors, all_unit_cell_property_vectors)
+
+    # If an element in the .xyz is not in the property vector then need to abondon and log it.
+    # 'None' is returned by rdf_setup in this case
+    if xyz_array_float_stacked is None:
+        raise ValueError('Element not found in Property_vectors.csv - Abandoning')
 
     # Create empty RDF array
     RDF = np.zeros([len(typed_Rs), 2])
@@ -87,8 +92,8 @@ for iteration, name in enumerate(name_list):
 
     #try clause used to ensure script can be left running and problem cases flagged for later investigation.
     try:
-        ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index)
-        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 200, 0)
+        ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property_index)
+        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 30, 200, 0)
 
 
         #None is returned if .xyz took too long to make

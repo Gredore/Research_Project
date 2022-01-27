@@ -32,16 +32,23 @@ def rdf_load_xyz(xyz_file_path):
 
     return xyz_array_float, length_one_unit_cell, atoms, all_element_property_vectors
 
-#@jit(nopython=True, parallel=True)
+@jit(nopython=True, parallel=True)
 def rdf_setup(xyz_array_float, xyz_array_float_stacked, length_one_unit_cell, unit_cell_atoms, atoms, all_element_property_vectors, all_unit_cell_property_vectors):
 
-    for t in range(0, length_one_unit_cell):
+    for t in prange(0, length_one_unit_cell):
         array_to_join = xyz_array_float[t*27:(t+1)*27, :]
         xyz_array_float_stacked[:,t,:] = array_to_join
         atom_to_join = atoms[t*27]
         unit_cell_atoms[t] = atom_to_join
         all_element_property_vectors_atoms = all_element_property_vectors[:, 0]
-        all_unit_cell_property_vectors[t] = all_element_property_vectors[np.where(all_element_property_vectors_atoms == atom_to_join)[0][0],1:np.shape(all_element_property_vectors)[1]]
+        location_of_atom_in_property_vectors = np.where(all_element_property_vectors_atoms == atom_to_join)[0]
+
+        # If an element in the .xyz is not in the property vector then need to abondon and log it.
+        if not len(location_of_atom_in_property_vectors):
+            return None, None, None
+
+        location_of_atom_in_property_vectors = location_of_atom_in_property_vectors[0]
+        all_unit_cell_property_vectors[t] = all_element_property_vectors[location_of_atom_in_property_vectors,1:np.shape(all_element_property_vectors)[1]]
     return xyz_array_float_stacked, unit_cell_atoms, all_unit_cell_property_vectors
 
 
