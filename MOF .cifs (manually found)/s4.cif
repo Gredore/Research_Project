@@ -8,7 +8,7 @@ _publ_contact_author_name         'Dr. Simona Galli'
 _publ_contact_author_address
 ;
     Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
 _publ_contact_author_email        'simona.galli@uninsubria.it'
@@ -74,12 +74,12 @@ loop_
    
     'Colombo, Valentina'
 ;   Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
     'Galli, Simona'
 ;   Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
     'Choi, Hye Jin'
@@ -100,17 +100,17 @@ loop_
 ;  
    'Maspero, Angelo'
 ;   Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
    'Palmisano, Giovanni'
 ;   Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
    'Masciocchi, Norberto'
 ;   Dipartimento di Scienze Chimiche e Ambientali,
-    Universit‡ degli Studi dell'Insubria,
+    Universit√† degli Studi dell'Insubria,
     Via Valleggio 11, 22100 Como - Italy.
 ;
    'Long, Jeffrey R.'
@@ -374,7 +374,7 @@ _pd_proc_ls_special_details
    within the octahedral cavities or one-dimensional channels, or covalently
    bound to the metal ions. Thus, its electronic density was modeled by
    allocating:(i) two dummy atoms at the centre of the cavities
-   (site [Ω, Ω, Ω]) and of the channels (site [Ω, 0, 0]) and
+   (site [≈ì, ≈ì, ≈ì]) and of the channels (site [≈ì, 0, 0]) and
    (ii) one dummy atom occupying, at a restrained distance,
    the apical position of the square pyramidal stereochemistry of the
    metal ions. The presence of disorder was taken into account by assigning

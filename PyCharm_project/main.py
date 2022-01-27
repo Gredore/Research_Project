@@ -7,6 +7,7 @@ import csv
 import sys
 from numba_progress import ProgressBar
 import time
+import traceback
 
 def delete_last_lines(n):
     for _ in range(n):
@@ -20,6 +21,13 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
     print(" -  Converting .cif to .xyz")
     run_cif_to_xyz_diffpy(mof_name, cif_path, xyz_path)
 
+    f = time.time()
+
+    #If .xyz took too long to make, then skip MOF
+    if f-s > 10:
+        print("#### Time to create .xyz implies file is too large... Skipping " + mof_name)
+        return
+
     print(" -  Successfully converted .cif to .xyz")
 
     Rs = np.linspace(0, 30, num=num_sample_rs)
@@ -28,7 +36,6 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
     typed_Rs = List()
     [typed_Rs.append(x) for x in Rs]
 
-    #s = time.time()
 
     print(" -  RDF Calculations - Loading .xyz")
     xyz_array_float, length_one_unit_cell, atoms, all_element_property_vectors = rdf_load_xyz(xyz_path + mof_name+".xyz")
@@ -59,9 +66,6 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index):
     #Scales RDF such that probability = 1 for all positions.
     RDF_scaled[:,1] = RDF[:,1] / area_under_curve
 
-
-    f = time.time()
-    #print(f-s)
     print(" -  Successfully calculated RDF")
 
     return RDF_scaled
@@ -70,7 +74,8 @@ cif_path = '../CIF_Outputs/'
 xyz_path = '../XYZ_Outputs/'
 rdf_path = '../RDF_Outputs/'
 
-name_list=[]
+name_list = []
+failed_list = []
 with open('input_names_reduced.csv') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     for row in csv_reader:
@@ -78,19 +83,35 @@ with open('input_names_reduced.csv') as csv_file:
 
 #name_list = [name_list[0]]
 for iteration, name in enumerate(name_list):
-    print('\033[0m\033[1m'+"Current MOF: " + name + " (" + str(iteration) + " / " + str(len(name_list)-1) +  ")" + '\033[0m \033[3m\033[2m')
-    ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index)
-    RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 200, 0)
-    np.savetxt(rdf_path + name + '.csv', RDF_scaled0, delimiter=',')
-    #delete_last_lines(19)
-    print('\033[0m\033[1m' + "Completed MOF: " + name + " (" + str(iteration+1) + " / " + str(len(name_list)) + ")")
+    print('\033[0m\033[1m'+"Current MOF: " + name + " (" + str(iteration+1) + " / " + str(len(name_list)) +  ")" + '\033[0m \033[3m\033[2m')
+
+    #try clause used to ensure script can be left running and problem cases flagged for later investigation.
+    try:
+        ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, B, property_index)
+        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 200, 0)
+
+
+        #None is returned if .xyz took too long to make
+        if RDF_scaled0 is not None:
+            np.savetxt(rdf_path + name + '.csv', RDF_scaled0, delimiter=',')
+            #delete_last_lines(19)
+            print('\033[0m\033[1m' + "Completed MOF: " + name + " (" + str(iteration+1) + " / " + str(len(name_list)) + ")")
+        else:
+            failed_list.append(name)
+
+    except Exception as e:
+        print(traceback.format_exc())
+        failed_list.append(name)
 
 print('\033[0m\033[1m' + "Finished.")
+if len(failed_list) > 0:
+    print("This is the list of failed entries", failed_list)
 # RDF_scaled1 = main("IRMOF-1", 300, 1)
 # RDF_scaled3 = main("IRMOF-1", 300, 3)
 #Fourier_RDF = np.real(np.fft.rfft(RDF_scaled[:,1], axis=0))
-plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1])
+#plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1])
 # plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled1[:,1])
 # plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled3[:,1])
-plt.show()
+#plt.show()
 
+##NOTE: RUNNING main.py FROM COMMAND LINE SEEMS BETTER AT FORCING ALL CORES TO BE USED##
