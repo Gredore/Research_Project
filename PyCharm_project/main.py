@@ -14,7 +14,7 @@ def delete_last_lines(n):
         sys.stdout.write('\x1b[1A')
         sys.stdout.write('\x1b[2K')
 
-def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property_index):
+def main_rdf(mof_name, cif_path, xyz_path, r_spacing, B, property_index):
 
     s = time.time()
 
@@ -29,13 +29,6 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property
         return
 
     print(" -  Successfully converted .cif to .xyz")
-
-    Rs = np.linspace(0, largest_r, num=num_sample_rs)
-
-    # Makes a typed.List as lists are deprecating in Numba
-    typed_Rs = List()
-    [typed_Rs.append(x) for x in Rs]
-
 
     print(" -  RDF Calculations - Loading .xyz")
     xyz_array_float, length_one_unit_cell, atoms, all_element_property_vectors = rdf_load_xyz(xyz_path + mof_name+".xyz")
@@ -54,10 +47,30 @@ def main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property
     if xyz_array_float_stacked is None:
         raise ValueError('Element not found in Property_vectors.csv - Abandoning')
 
+    print(" -  RDF Calculations - Calculating RDF")
+
+    #Calculate largest possible distance between atoms by edges of unit cell to centre of cell
+    max_x = np.amax(xyz_array_float_stacked[:, :, 0])*0.167
+    max_y = np.amax(xyz_array_float_stacked[:, :, 1])*0.167
+    max_z = np.amax(xyz_array_float_stacked[:, :, 2])*0.167
+    max_coordinate = np.array([max_x, max_y, max_z])
+    max_dist = np.linalg.norm(max_coordinate)
+
+    #Choose max value of r used to ensure all values included.
+    largest_r = 1.2 * max_dist
+    #print(largest_r)
+    Rs = np.arange(0, largest_r, r_spacing)
+
+    #Old version of calculating list of Rs using fixed number of points
+    #Rs = np.linspace(0, largest_r, num=num_sample_rs)
+
+    # Makes a typed.List as lists are deprecating in Numba
+    typed_Rs = List()
+    [typed_Rs.append(x) for x in Rs]
+
     # Create empty RDF array
     RDF = np.zeros([len(typed_Rs), 2])
 
-    print(" -  RDF Calculations - Calculating RDF")
     with ProgressBar(total=length_one_unit_cell) as progress:
         RDF = rdf(RDF, length_one_unit_cell, xyz_array_float_stacked, typed_Rs, B, all_unit_cell_property_vectors[:,property_index], progress)
 
@@ -92,8 +105,8 @@ for iteration, name in enumerate(name_list):
 
     #try clause used to ensure script can be left running and problem cases flagged for later investigation.
     try:
-        ##            main_rdf(mof_name, cif_path, xyz_path, num_sample_rs, largest_r, B, property_index)
-        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 300, 30, 200, 0)
+        ##            main_rdf(mof_name, cif_path, xyz_path, r_spacing, B, property_index):
+        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 0.1, 200, 0)
 
 
         #None is returned if .xyz took too long to make
@@ -114,9 +127,9 @@ if len(failed_list) > 0:
 # RDF_scaled1 = main("IRMOF-1", 300, 1)
 # RDF_scaled3 = main("IRMOF-1", 300, 3)
 #Fourier_RDF = np.real(np.fft.rfft(RDF_scaled[:,1], axis=0))
-#plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1])
+plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1])
 # plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled1[:,1])
 # plt.plot(RDF_scaled0[:,0],RDF_scaled0[:,1]-RDF_scaled3[:,1])
-#plt.show()
+plt.show()
 
 ##NOTE: RUNNING main.py FROM COMMAND LINE SEEMS BETTER AT FORCING ALL CORES TO BE USED##
