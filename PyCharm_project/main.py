@@ -24,7 +24,7 @@ def main_rdf(mof_name, cif_path, xyz_path, r_spacing, B, property_index):
     f = time.time()
 
     #If .xyz took too long to make, then skip MOF
-    if f-s > 10:
+    if f-s > 20:
         print("#### Time to create .xyz implies file is too large... Skipping " + mof_name)
         return
 
