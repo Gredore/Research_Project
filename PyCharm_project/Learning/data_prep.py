@@ -2,7 +2,7 @@ import numpy as np
 from tensorflow.keras.utils import to_categorical
 from sklearn.utils import class_weight
 
-def data_prep():
+def data_prep(use_catagorical_y):
     #Configure the preparation of the training set data
     RDF_Outputs_path = "../../RDF_Outputs/"
     r_spacing = 0.1
@@ -47,7 +47,8 @@ def data_prep():
 
     class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(y_train_RDF), y=y_train_RDF)
     class_weights_dict = dict(enumerate(class_weights))
-    y_train_RDF = to_categorical(y_train_RDF)
+    if use_catagorical_y:
+        y_train_RDF = to_categorical(y_train_RDF)
 
     return X_train_RDF, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs
 

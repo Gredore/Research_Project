@@ -17,7 +17,7 @@ early_stopping_patience = 5000
 NCOMPONENTS = 40 #For Principal Component Analysis
 
 #NOTE: Configuration MUST be done within data_prep.py before running!
-X_train_RDF, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep()
+X_train_RDF, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=True)
 
 # Define per-fold score containers
 acc_per_fold = []
