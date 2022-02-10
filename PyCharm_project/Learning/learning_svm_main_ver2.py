@@ -25,6 +25,7 @@ param_distributions = {
 
 #print(clf.get_params().keys())
 
+
 matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
 gd_sr = RandomizedSearchCV(estimator=clf,
                      param_distributions=param_distributions,
@@ -39,6 +40,7 @@ best_parameters = gd_sr.best_params_
 print(best_parameters)
 best_result = gd_sr.best_score_
 print(best_result)
+
 
 #print(gd_sr.cv_results_['mean_test_score'])
 #print(gd_sr.cv_results_['std_test_score'])
