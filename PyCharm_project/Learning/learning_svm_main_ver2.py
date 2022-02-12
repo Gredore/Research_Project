@@ -24,6 +24,7 @@ X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 
 X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_electroneg_fft), axis=1)
+#X_train_RDF = X_train_RDF_electroneg
 
 #########################
 # Code below used to plot all RDFs for interest
@@ -44,9 +45,9 @@ param_distributions = {
 
 #print(clf.get_params().keys())
 
-num_folds = 10
+num_folds = 15
 
-if True: #Turn off and on RandomizedSearch for C
+if False: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
     gd_sr = RandomizedSearchCV(estimator=clf,
                          param_distributions=param_distributions,
@@ -76,7 +77,7 @@ if True: #Turn off and on RandomizedSearch for C
     ################################################
     CSV_C = best_parameters['svc__C']
 else:
-    CSV_C = 4.89
+    CSV_C = 4.737
 
 #Generate averaged confusion matrix
 Repeats_of_shuffled_splits = 20
@@ -100,11 +101,16 @@ for i in range (0, Repeats_of_shuffled_splits):
         y_pred = clf.predict(X_test)
 
         cf_matrix_repeats[:,:,i] = confusion_matrix(y_train_RDF[test], y_pred)
-
+        #print(y_train_RDF[test])
+        #print(confusion_matrix(y_train_RDF[test], y_pred))
 
 cf_matrix = np.mean(cf_matrix_repeats, axis=2)
-print(np.std(cf_matrix_repeats, axis=2))
 print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(Repeats_of_shuffled_splits))
+MCC = (cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0])\
+      /(np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0])))
+
+print(cf_matrix)
+print(MCC)
 
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 
