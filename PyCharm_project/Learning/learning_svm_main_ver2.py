@@ -14,7 +14,27 @@ import seaborn as sns
 
 from data_prep import *
 
-X_train_RDF, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
+X_train_RDF_unit, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
+X_train_RDF_electroneg, _, _, _, _ = data_prep(use_catagorical_y=False, atomic_weighting="electroneg")
+
+X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
+
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg), axis=1)
+
+X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
+
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_electroneg_fft), axis=1)
+
+#########################
+# Code below used to plot all RDFs for interest
+
+# fig, ax = plt.subplots()
+# #Manually set r values
+# ax.plot(np.linspace(0, 60, 301), X_train_RDF[:,:,0].T,linewidth=0.2)
+# plt.show()
+
+#########################
+
 
 clf = make_pipeline(StandardScaler(), svm.SVC(kernel='rbf', class_weight='balanced'))
 
@@ -26,7 +46,7 @@ param_distributions = {
 
 num_folds = 10
 
-if False: #Turn off and on RandomizedSearch for C
+if True: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
     gd_sr = RandomizedSearchCV(estimator=clf,
                          param_distributions=param_distributions,
@@ -56,7 +76,7 @@ if False: #Turn off and on RandomizedSearch for C
     ################################################
     CSV_C = best_parameters['svc__C']
 else:
-    CSV_C = 3.21
+    CSV_C = 4.89
 
 #Generate averaged confusion matrix
 Repeats_of_shuffled_splits = 20
