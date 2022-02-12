@@ -106,7 +106,7 @@ for iteration, name in enumerate(name_list):
     #try clause used to ensure script can be left running and problem cases flagged for later investigation.
     try:
         ##            main_rdf(mof_name, cif_path, xyz_path, r_spacing, B, property_index):
-        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 0.1, 200, 0)
+        RDF_scaled0 = main_rdf(name, cif_path, xyz_path, 0.1, 200, 1)
 
 
         #None is returned if .xyz took too long to make
