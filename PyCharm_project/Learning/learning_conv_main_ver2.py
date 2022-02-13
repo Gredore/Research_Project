@@ -21,10 +21,11 @@ NCOMPONENTS = 40 #For Principal Component Analysis
 X_train_RDF, y_train_RDF_not_cat, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
 y_train_RDF = to_categorical(y_train_RDF_not_cat)  # Required after kfold as statifiedkfold requires non-categorical unlike normal kfold.
 
-Repeats_of_shuffled_splits = 3
+Repeats_of_shuffled_splits = 2
 
-cf_matrix_repeats = np.zeros([2, 2, Repeats_of_shuffled_splits])
+cf_matrix_repeats = np.zeros([2, 2, Repeats_of_shuffled_splits*num_folds])
 
+fold_counter_including_repeats = 0
 for i in range (0, Repeats_of_shuffled_splits):
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
 
@@ -41,7 +42,8 @@ for i in range (0, Repeats_of_shuffled_splits):
         model = Sequential()
 
         model.add(Conv1D(32, kernel_size=3, activation='relu', input_shape=([X_pca_train.shape[1], 1])))
-        #model.add(Conv1D(64, kernel_size=3, activation='relu'))
+        model.add(Conv1D(8, kernel_size=3, activation='relu'))
+        model.add(Conv1D(8, kernel_size=3, activation='relu'))
         model.add(Flatten())
         #model.add(Dense(30, activation='softmax'))
         model.add(Dense(2, activation='softmax'))
@@ -71,14 +73,23 @@ for i in range (0, Repeats_of_shuffled_splits):
         #print(y_pred)
 
 
-        cf_matrix_repeats[:, :, i] = confusion_matrix(y_test, y_pred)
+        cf_matrix_repeats[:, :, fold_counter_including_repeats] = confusion_matrix(y_test, y_pred)
 
         fold_no = fold_no + 1
+        fold_counter_including_repeats = fold_counter_including_repeats + 1
 
 
 cf_matrix = np.mean(cf_matrix_repeats, axis=2)
 print(np.std(cf_matrix_repeats, axis=2))
-print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(Repeats_of_shuffled_splits))
+print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(len(cf_matrix_repeats)))
+MCC_numerator = cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0]
+MCC_denominator = np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0]))
+if MCC_denominator == 0:
+    MCC_denominator = 1  # See wikipedia article for MCC - If denominator is zero can set to 1.
+MCC = MCC_numerator / MCC_denominator
+print(MCC)
+
+
 
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 

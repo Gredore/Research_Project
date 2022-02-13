@@ -21,10 +21,11 @@ X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
 
 #X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg), axis=1)
 
+X_train_RDF_unit_fft = np.abs(np.fft.rfft(X_train_RDF_unit, axis=1))
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 
-X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_electroneg_fft), axis=1)
-#X_train_RDF = X_train_RDF_electroneg
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_fft, X_train_RDF_unit_minus_electroneg_fft), axis=1)
+#X_train_RDF = X_train_RDF_unit_fft
 
 #########################
 # Code below used to plot all RDFs for interest
@@ -40,19 +41,20 @@ X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_
 clf = make_pipeline(StandardScaler(), svm.SVC(kernel='rbf', class_weight='balanced'))
 
 param_distributions = {
-    'svc__C': loguniform(1e-4, 1e5)
+    'svc__C': loguniform(1e-2, 1e2),
 }
 
 #print(clf.get_params().keys())
 
-num_folds = 15
+num_folds = 30
 
-if False: #Turn off and on RandomizedSearch for C
+if True: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
+    kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
     gd_sr = RandomizedSearchCV(estimator=clf,
                          param_distributions=param_distributions,
                          scoring=matthews_corrcoef_scorer,
-                         cv=num_folds,
+                         cv=kfold,
                          n_iter=400,
                          n_jobs=-1)
 
@@ -77,40 +79,52 @@ if False: #Turn off and on RandomizedSearch for C
     ################################################
     CSV_C = best_parameters['svc__C']
 else:
-    CSV_C = 4.737
+    CSV_C = 4
 
 #Generate averaged confusion matrix
 Repeats_of_shuffled_splits = 20
 
-cf_matrix_repeats = np.zeros([2, 2, Repeats_of_shuffled_splits])
+cf_matrix_repeats = np.zeros([2, 2, Repeats_of_shuffled_splits*num_folds])
+MCCs = np.zeros([Repeats_of_shuffled_splits*num_folds])
 
 np.set_printoptions(threshold=np.inf)
 
+fold_counter_including_repeats = 0
 for i in range (0, Repeats_of_shuffled_splits):
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
-    fold_no = 1
     for train, test in kfold.split(X_train_RDF, y_train_RDF):
+
         X_train = X_train_RDF[train][:, :, 0]
         X_test = X_train_RDF[test][:, :, 0]
 
         clf = make_pipeline(StandardScaler(), svm.SVC(C=CSV_C, kernel='rbf', class_weight='balanced'))
-        #clf = make_pipeline(svm.SVC(C=CSV_C, kernel='rbf', class_weight='balanced'))
         clf.fit(X_train, y_train_RDF[train])
 
         #Occasionally fails due to some kind of scaling issue - Just re-run to fix.
         y_pred = clf.predict(X_test)
 
-        cf_matrix_repeats[:,:,i] = confusion_matrix(y_train_RDF[test], y_pred)
+        current_cf_matrix = confusion_matrix(y_train_RDF[test], y_pred)
+        cf_matrix_repeats[:,:,fold_counter_including_repeats] = current_cf_matrix
+        MCC_numerator = (current_cf_matrix[1,1]*current_cf_matrix[0,0] - current_cf_matrix[0,1]*current_cf_matrix[1,0])
+        MCC_denominator = np.sqrt(  (current_cf_matrix[1,1] + current_cf_matrix[0,1]) * (current_cf_matrix[1,1] + current_cf_matrix[1,0])  * (current_cf_matrix[0,0] + current_cf_matrix[0,1]) * (current_cf_matrix[0,0] + current_cf_matrix[1,0]))
+        if MCC_denominator == 0:
+            MCC_denominator = 1 #See wikipedia article for MCC - If denominator is zero can set to 1.
+        MCCs[fold_counter_including_repeats] = MCC_numerator/MCC_denominator
         #print(y_train_RDF[test])
         #print(confusion_matrix(y_train_RDF[test], y_pred))
+        fold_counter_including_repeats = fold_counter_including_repeats + 1
 
 cf_matrix = np.mean(cf_matrix_repeats, axis=2)
-print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(Repeats_of_shuffled_splits))
-MCC = (cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0])\
-      /(np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0])))
+print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(len(cf_matrix_repeats)))
+MCC_numerator = cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0]
+MCC_denominator = np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0]))
+if MCC_denominator == 0:
+    MCC_denominator = 1  # See wikipedia article for MCC - If denominator is zero can set to 1.
+MCC = MCC_numerator / MCC_denominator
 
 print(cf_matrix)
 print(MCC)
+print(np.mean(MCCs))
 
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 

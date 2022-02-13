@@ -72,6 +72,8 @@ for train, test in kfold.split(X_train_RDF, y_train_RDF):
     acc_per_fold.append(metrics.accuracy_score(y_train_RDF[test], y_pred)*100)
     #print("Accuracy:", metrics.accuracy_score(y_train_RDF[test], y_pred))
 
+    fold_no = fold_no + 1
+
 print('------------------------------------------------------------------------')
 print('Score per fold')
 for i in range(0, len(acc_per_fold)):
