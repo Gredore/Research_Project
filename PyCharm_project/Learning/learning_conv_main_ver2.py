@@ -1,7 +1,7 @@
 import numpy as np
 from tensorflow import keras
 from keras.models import Sequential
-from keras.layers import Dense, Conv1D, Flatten
+from keras.layers import Dense, Conv1D, Flatten, Dropout, MaxPool1D
 from keras.callbacks import EarlyStopping
 import sklearn
 from sklearn.model_selection import StratifiedKFold
@@ -18,12 +18,19 @@ early_stopping_patience = 5000
 NCOMPONENTS = 40 #For Principal Component Analysis
 
 #NOTE: Configuration MUST be done within data_prep.py before running!
-X_train_RDF, y_train_RDF_not_cat, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
+X_train_RDF_unit, y_train_RDF_not_cat, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
+X_train_RDF_electroneg, _, _, _, _ = data_prep(use_catagorical_y=False, atomic_weighting="electroneg")
+
+X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
 y_train_RDF = to_categorical(y_train_RDF_not_cat)  # Required after kfold as statifiedkfold requires non-categorical unlike normal kfold.
 
-Repeats_of_shuffled_splits = 2
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg), axis=1)
+X_train_RDF = X_train_RDF_unit
+
+Repeats_of_shuffled_splits = 1
 
 cf_matrix_repeats = np.zeros([2, 2, Repeats_of_shuffled_splits*num_folds])
+MCCs = np.zeros([Repeats_of_shuffled_splits*num_folds])
 
 fold_counter_including_repeats = 0
 for i in range (0, Repeats_of_shuffled_splits):
@@ -35,17 +42,20 @@ for i in range (0, Repeats_of_shuffled_splits):
 
     for train, test in kfold.split(X_train_RDF, y_train_RDF_not_cat):
 
-        pca = PCA(n_components=NCOMPONENTS)
-        X_pca_train = pca.fit_transform(X_train_RDF[train][:,:,0])
-        X_pca_test = pca.transform(X_train_RDF[test][:,:,0])
+        #pca = PCA(n_components=NCOMPONENTS)
+        #X_pca_train = pca.fit_transform(X_train_RDF[train][:,:,0])
+        #X_pca_test = pca.transform(X_train_RDF[test][:,:,0])
+        X_pca_train = X_train_RDF[train][:,:,0] #Currently have PCA turned off ^
+        X_pca_test = X_train_RDF[test][:,:,0]
+
 
         model = Sequential()
 
-        model.add(Conv1D(32, kernel_size=3, activation='relu', input_shape=([X_pca_train.shape[1], 1])))
-        model.add(Conv1D(8, kernel_size=3, activation='relu'))
-        model.add(Conv1D(8, kernel_size=3, activation='relu'))
+        model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=([X_pca_train.shape[1], 1])))
+        model.add(MaxPool1D(pool_size=3))
+        #model.add(Conv1D(32, kernel_size=3, activation='relu'))
         model.add(Flatten())
-        #model.add(Dense(30, activation='softmax'))
+        model.add(Dense(32, activation='relu'))
         model.add(Dense(2, activation='softmax'))
 
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -72,28 +82,39 @@ for i in range (0, Repeats_of_shuffled_splits):
         #print(y_test)
         #print(y_pred)
 
-
-        cf_matrix_repeats[:, :, fold_counter_including_repeats] = confusion_matrix(y_test, y_pred)
+        current_cf_matrix = confusion_matrix(y_test, y_pred)
+        current_cf_matrix = current_cf_matrix / (current_cf_matrix[1, 1])
+        cf_matrix_repeats[:, :, fold_counter_including_repeats] = current_cf_matrix
+        MCC_numerator = (
+                    current_cf_matrix[1, 1] * current_cf_matrix[0, 0] - current_cf_matrix[0, 1] * current_cf_matrix[1, 0])
+        MCC_denominator = np.sqrt((current_cf_matrix[1, 1] + current_cf_matrix[0, 1]) * (
+                    current_cf_matrix[1, 1] + current_cf_matrix[1, 0]) * (
+                                              current_cf_matrix[0, 0] + current_cf_matrix[0, 1]) * (
+                                              current_cf_matrix[0, 0] + current_cf_matrix[1, 0]))
+        if MCC_denominator == 0:
+            MCC_denominator = 1  # See wikipedia article for MCC - If denominator is zero can set to 1.
+        MCCs[fold_counter_including_repeats] = MCC_numerator / MCC_denominator
 
         fold_no = fold_no + 1
         fold_counter_including_repeats = fold_counter_including_repeats + 1
 
 
 cf_matrix = np.mean(cf_matrix_repeats, axis=2)
-print(np.std(cf_matrix_repeats, axis=2))
-print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(len(cf_matrix_repeats)))
+print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(cf_matrix_repeats.shape[2]))
 MCC_numerator = cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0]
 MCC_denominator = np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0]))
 if MCC_denominator == 0:
     MCC_denominator = 1  # See wikipedia article for MCC - If denominator is zero can set to 1.
 MCC = MCC_numerator / MCC_denominator
-print(MCC)
+#print(MCC)
 
+print(cf_matrix)
+print(np.mean(MCCs), np.std(MCCs)/np.sqrt(len(MCCs)))
 
 
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 
-ax.set_title('Seaborn Confusion Matrix with labels\n\n');
+ax.set_title('CNN [64:32] Confusion Matrix [weighting=unit]\n\n');
 ax.set_xlabel('\nPredicted Values')
 ax.set_ylabel('Actual Values ');
 

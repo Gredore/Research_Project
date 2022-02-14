@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn import svm
 from sklearn import metrics
@@ -24,15 +25,18 @@ X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
 X_train_RDF_unit_fft = np.abs(np.fft.rfft(X_train_RDF_unit, axis=1))
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 
-X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_fft, X_train_RDF_unit_minus_electroneg_fft), axis=1)
-#X_train_RDF = X_train_RDF_unit_fft
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_fft, X_train_RDF_unit_minus_electroneg_fft), axis=1)
+X_train_RDF = X_train_RDF_electroneg
 
 #########################
-# Code below used to plot all RDFs for interest
+#Code below used to plot all RDFs for interest
 
 # fig, ax = plt.subplots()
 # #Manually set r values
-# ax.plot(np.linspace(0, 60, 301), X_train_RDF[:,:,0].T,linewidth=0.2)
+# plt.rcParams.update({'font.size': 16})
+# ax.plot(np.linspace(0, 60, 300), X_train_RDF[:,0:300,0].T,linewidth=0.8)
+# plt.xlabel('R / $\AA$')
+# plt.ylabel('RDF score')
 # plt.show()
 
 #########################
@@ -46,7 +50,7 @@ param_distributions = {
 
 #print(clf.get_params().keys())
 
-num_folds = 30
+num_folds = 15
 
 if True: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
@@ -104,6 +108,7 @@ for i in range (0, Repeats_of_shuffled_splits):
         y_pred = clf.predict(X_test)
 
         current_cf_matrix = confusion_matrix(y_train_RDF[test], y_pred)
+        current_cf_matrix = current_cf_matrix/(current_cf_matrix[1,1])
         cf_matrix_repeats[:,:,fold_counter_including_repeats] = current_cf_matrix
         MCC_numerator = (current_cf_matrix[1,1]*current_cf_matrix[0,0] - current_cf_matrix[0,1]*current_cf_matrix[1,0])
         MCC_denominator = np.sqrt(  (current_cf_matrix[1,1] + current_cf_matrix[0,1]) * (current_cf_matrix[1,1] + current_cf_matrix[1,0])  * (current_cf_matrix[0,0] + current_cf_matrix[0,1]) * (current_cf_matrix[0,0] + current_cf_matrix[1,0]))
@@ -115,7 +120,7 @@ for i in range (0, Repeats_of_shuffled_splits):
         fold_counter_including_repeats = fold_counter_including_repeats + 1
 
 cf_matrix = np.mean(cf_matrix_repeats, axis=2)
-print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(len(cf_matrix_repeats)))
+print('Standard deviation of means:',np.std(cf_matrix_repeats, axis=2)/np.sqrt(cf_matrix_repeats.shape[2]))
 MCC_numerator = cf_matrix[1,1]*cf_matrix[0,0] - cf_matrix[0,1]*cf_matrix[1,0]
 MCC_denominator = np.sqrt(  (cf_matrix[1,1] + cf_matrix[0,1]) * (cf_matrix[1,1] + cf_matrix[1,0])  * (cf_matrix[0,0] + cf_matrix[0,1]) * (cf_matrix[0,0] + cf_matrix[1,0]))
 if MCC_denominator == 0:
@@ -123,12 +128,12 @@ if MCC_denominator == 0:
 MCC = MCC_numerator / MCC_denominator
 
 print(cf_matrix)
-print(MCC)
-print(np.mean(MCCs))
+#print(MCC)
+print(np.mean(MCCs), np.std(MCCs)/np.sqrt(len(MCCs)))
 
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
 
-ax.set_title('Seaborn Confusion Matrix with labels\n\n');
+ax.set_title('SVM Confusion Matrix [weighting=electronegativity]\n\n');
 ax.set_xlabel('\nPredicted Values')
 ax.set_ylabel('Actual Values ');
 
