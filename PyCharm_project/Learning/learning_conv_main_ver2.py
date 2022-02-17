@@ -24,7 +24,7 @@ X_train_RDF_electroneg, _, _, _, _ = data_prep(use_catagorical_y=False, atomic_w
 X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
 y_train_RDF = to_categorical(y_train_RDF_not_cat)  # Required after kfold as statifiedkfold requires non-categorical unlike normal kfold.
 
-#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg), axis=1)
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg), axis=1)
 X_train_RDF = X_train_RDF_unit
 
 Repeats_of_shuffled_splits = 1

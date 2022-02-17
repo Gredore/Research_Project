@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-RDF_path = "../RDF_Outputs_electroneg/s15.csv"
+RDF_path = "../RDF_Outputs_unit/s40.csv"
 
 csv_ingest = np.loadtxt(RDF_path,dtype=np.float64, delimiter=',')
 rdf_values = csv_ingest[:,1]
