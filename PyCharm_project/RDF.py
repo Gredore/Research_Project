@@ -45,6 +45,7 @@ def rdf_setup(xyz_array_float, xyz_array_float_stacked, length_one_unit_cell, un
 
         # If an element in the .xyz is not in the property vector then need to abondon and log it.
         if not len(location_of_atom_in_property_vectors):
+            print(atom_to_join)
             return None, None, None
 
         location_of_atom_in_property_vectors = location_of_atom_in_property_vectors[0]
