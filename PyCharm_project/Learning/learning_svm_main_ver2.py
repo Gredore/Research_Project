@@ -17,16 +17,18 @@ from data_prep import *
 
 X_train_RDF_unit, y_train_RDF, class_weights_dict, num_stable_RDFs, num_unstable_RDFs = data_prep(use_catagorical_y=False, atomic_weighting="unit")
 X_train_RDF_electroneg, _, _, _, _ = data_prep(use_catagorical_y=False, atomic_weighting="electroneg")
+X_train_RDF_vdW, _, _, _, _ = data_prep(use_catagorical_y=False, atomic_weighting="vdW")
 
 X_train_RDF_unit_minus_electroneg = X_train_RDF_unit - X_train_RDF_electroneg
+X_train_RDF_unit_minus_vdW = X_train_RDF_unit - X_train_RDF_vdW
 
 #X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg), axis=1)
 
 X_train_RDF_unit_fft = np.abs(np.fft.rfft(X_train_RDF_unit, axis=1))
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 
-#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_fft, X_train_RDF_unit_minus_electroneg_fft), axis=1)
-X_train_RDF = X_train_RDF_electroneg
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=1)
+#X_train_RDF = X_train_RDF_unit
 
 #########################
 #Code below used to plot all RDFs for interest
