@@ -1,7 +1,7 @@
 import numpy as np
 from tensorflow import keras
 from keras.models import Sequential
-from keras.layers import Dense, Conv1D, Flatten, Dropout, MaxPool1D
+from keras.layers import Dense, Conv1D, Flatten, Dropout, MaxPool1D, BatchNormalization
 from keras.callbacks import EarlyStopping
 import sklearn
 from sklearn.model_selection import StratifiedKFold
@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from data_prep import *
 
 num_folds = 10
-epochs = 200
+epochs = 300
 early_stopping_patience = 5000
 
 #NOTE: Configuration MUST be done within data_prep.py before running!
@@ -25,7 +25,10 @@ X_train_RDF_unit_minus_vdW = X_train_RDF_unit - X_train_RDF_vdW
 
 y_train_RDF = to_categorical(y_train_RDF_not_cat)  # Required after kfold as statifiedkfold requires non-categorical unlike normal kfold.
 
-X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=2)
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=2)
+
+
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_vdW), axis=2)
 #X_train_RDF = X_train_RDF_vdW
 
 Repeats_of_shuffled_splits = 1
@@ -36,6 +39,7 @@ val_accuracy_summed = np.zeros(epochs)
 
 fold_counter_including_repeats = 0
 
+
 for i in range (0, Repeats_of_shuffled_splits):
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
 
@@ -45,10 +49,12 @@ for i in range (0, Repeats_of_shuffled_splits):
     for train, test in kfold.split(X_train_RDF, y_train_RDF_not_cat):
 
         model = Sequential()
-
-        model.add(Conv1D(16, kernel_size=3, activation='relu', input_shape=(X_train_RDF[train].shape[1:])))
+        #model.add(BatchNormalization(input_shape=(X_train_RDF[train].shape[1:])))
+        model.add(Dropout(0.5))
+        model.add(Conv1D(25, kernel_size=3, activation='relu'))
         model.add(MaxPool1D(pool_size=3))
         model.add(Flatten())
+        model.add(Dropout(0.5))
         model.add(Dense(16, activation='relu'))
         model.add(Dense(2, activation='softmax'))
 
@@ -62,7 +68,8 @@ for i in range (0, Repeats_of_shuffled_splits):
         history = model.fit(X_train_RDF[train], y_train_RDF[train], validation_data=(X_train_RDF[test], y_train_RDF[test]),
                             class_weight=class_weights_dict, epochs=epochs, verbose=0, callbacks=[es])
 
-        val_accuracy_summed = val_accuracy_summed + np.array(history.history['val_accuracy'])
+
+        val_accuracy_summed = val_accuracy_summed + np.pad(np.array(history.history['val_accuracy']), (0, epochs - len(np.array(history.history['val_accuracy']))), 'constant')
 
         # Generate generalization metrics
         #scores = model.evaluate(X_train_RDF[test], y_train_RDF[test], verbose=0)

@@ -1,12 +1,11 @@
 import numpy as np
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
-from sklearn.utils.fixes import loguniform
 from sklearn.metrics import matthews_corrcoef
 import sklearn.metrics
 from sklearn.metrics import make_scorer
@@ -28,7 +27,7 @@ X_train_RDF_unit_fft = np.abs(np.fft.rfft(X_train_RDF_unit, axis=1))
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 X_train_RDF_unit_minus_vdW_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_vdW, axis=1))
 
-X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_vdW, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=1)
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_vdW), axis=1)
 #X_train_RDF = X_train_RDF_unit
 
 #########################
@@ -44,18 +43,17 @@ X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_
 
 #########################
 
-
-clf = make_pipeline(StandardScaler(), svm.SVC(kernel='rbf', class_weight='balanced'))
+clf = make_pipeline(StandardScaler(), RandomForestClassifier(class_weight='balanced'))
 
 param_distributions = {
-    'svc__C': loguniform(1e-2, 1e2),
+    'randomforestclassifier__n_estimators': range(1,100),
 }
 
 #print(clf.get_params().keys())
 
-num_folds = 15
+num_folds = 10
 
-if True: #Turn off and on RandomizedSearch for C
+if False: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
     gd_sr = RandomizedSearchCV(estimator=clf,
@@ -78,15 +76,16 @@ if True: #Turn off and on RandomizedSearch for C
 
     ################################################
     #Create figure to show different values of C and the MCC score for each:
-    fig, ax = plt.subplots()
-    ax.plot(gd_sr.cv_results_['param_svc__C'], gd_sr.cv_results_['mean_test_score'], 'k+')
-    plt.xscale("log")
-    plt.show()
+    # fig, ax = plt.subplots()
+    # print(gd_sr.cv_results_)
+    # ax.plot(gd_sr.cv_results_['param_randomforestclassifier__n_estimators'], gd_sr.cv_results_['mean_test_score'], 'k+')
+    # plt.xscale("log")
+    # plt.show()
 
     ################################################
-    CSV_C = best_parameters['svc__C']
+    n_estimators = best_parameters['randomforestclassifier__n_estimators']
 else:
-    CSV_C = 4.9
+    n_estimators = 100
 
 #Generate averaged confusion matrix
 Repeats_of_shuffled_splits = 20
@@ -104,7 +103,7 @@ for i in range (0, Repeats_of_shuffled_splits):
         X_train = X_train_RDF[train][:, :, 0]
         X_test = X_train_RDF[test][:, :, 0]
 
-        clf = make_pipeline(StandardScaler(), svm.SVC(C=CSV_C, kernel='rbf', class_weight='balanced'))
+        clf = make_pipeline(StandardScaler(), RandomForestClassifier(n_estimators = n_estimators, class_weight='balanced'))
         clf.fit(X_train, y_train_RDF[train])
 
         #Occasionally fails due to some kind of scaling issue - Just re-run to fix.
