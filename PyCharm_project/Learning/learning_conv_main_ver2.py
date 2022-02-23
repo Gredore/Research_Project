@@ -18,7 +18,7 @@ early_stopping_patience = 5000
 
 #NOTE: Configuration MUST be done within data_prep.py before running!
 
-for ratio_of_dataset_to_use in [0.85, 0.85 ,0.85]:
+for ratio_of_dataset_to_use in [1]:
 
     random_seed = random.randrange(sys.maxsize) #Generate random seed. The same seed is used for all data_prep calls
     #ratio_of_dataset_to_use = 0.8 #Set to None if want to use all dataset
@@ -56,7 +56,7 @@ for ratio_of_dataset_to_use in [0.85, 0.85 ,0.85]:
             model = Sequential()
             #model.add(BatchNormalization(input_shape=(X_train_RDF[train].shape[1:])))
             model.add(Dropout(0.3))
-            model.add(Conv1D(25, kernel_size=3, activation='relu'))
+            model.add(Conv1D(25, kernel_size=3, activation='relu', input_shape=(X_train_RDF[train].shape[1:])))
             model.add(MaxPool1D(pool_size=3))
             model.add(Flatten())
             model.add(Dropout(0.2))

@@ -18,5 +18,5 @@ plt.plot(x, a*x**2 + b*x + c, color=((0, 0.7, 0.7)), linewidth = 2)
 plt.xlabel('Fraction of whole dataset', fontsize=20)
 plt.ylabel('MCC', fontsize=20)
 
-plt.savefig('../ModelALearningCurve.png', format='png', dpi=200)
+#plt.savefig('../ModelALearningCurve.png', format='png', dpi=200)
 plt.show()
