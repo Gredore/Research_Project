@@ -28,8 +28,9 @@ X_train_RDF_unit_fft = np.abs(np.fft.rfft(X_train_RDF_unit, axis=1))
 X_train_RDF_unit_minus_electroneg_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_electroneg, axis=1))
 X_train_RDF_unit_minus_vdW_fft = np.abs(np.fft.rfft(X_train_RDF_unit_minus_vdW, axis=1))
 
-X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_vdW, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=1)
-#X_train_RDF = X_train_RDF_unit
+#X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_unit_minus_electroneg, X_train_RDF_unit_minus_vdW), axis=1)
+X_train_RDF = np.concatenate((X_train_RDF_unit, X_train_RDF_electroneg, X_train_RDF_vdW), axis=1)
+#X_train_RDF = X_train_RDF_electroneg
 
 #########################
 #Code below used to plot all RDFs for interest
@@ -55,7 +56,7 @@ param_distributions = {
 
 num_folds = 15
 
-if True: #Turn off and on RandomizedSearch for C
+if False: #Turn off and on RandomizedSearch for C
     matthews_corrcoef_scorer = make_scorer(sklearn.metrics.matthews_corrcoef)
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True)
     gd_sr = RandomizedSearchCV(estimator=clf,
@@ -86,7 +87,7 @@ if True: #Turn off and on RandomizedSearch for C
     ################################################
     CSV_C = best_parameters['svc__C']
 else:
-    CSV_C = 4.9
+    CSV_C = 5
 
 #Generate averaged confusion matrix
 Repeats_of_shuffled_splits = 20
@@ -134,7 +135,10 @@ print(cf_matrix)
 #print(MCC)
 print(np.mean(MCCs), np.std(MCCs)/np.sqrt(len(MCCs)))
 
+
 ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
+
+sns.set(font_scale = 3)
 
 ax.set_title('SVM Confusion Matrix [weighting=electronegativity]\n\n');
 ax.set_xlabel('\nPredicted Values')

@@ -21,7 +21,7 @@ rdf_values = csv_ingest[:,1]
 r_values = np.arange(0, 20, 0.1)
 padded_rdf3 = np.pad(rdf_values, (0, 200 - rdf_values.size), 'constant')
 
-ax.plot(r_values,padded_rdf3, linewidth=2, color='g', label='Van der Waals volume')
+ax.plot(r_values,padded_rdf3, linewidth=2, color='g', label='VdWaals volume')
 
 
 RDF_path = "../RDF_Outputs_unit/s40.csv"
@@ -32,12 +32,13 @@ r_values = np.arange(0, 20, 0.1)
 padded_rdf1 = np.pad(rdf_values, (0, 200 - rdf_values.size), 'constant')
 
 
-plt.rcParams.update({'font.size': 16})
-ax.plot(r_values,padded_rdf1, linewidth=2, color='k', label='Unit')
-plt.xlabel('R / $\AA$', fontsize=20)
-plt.ylabel('RDF score', fontsize=20)
+plt.rcParams.update({'font.size': 25})
+ax.plot(r_values,padded_rdf1, linewidth=2, color='k', label='Unit $(P_i = P_j = 1)$')
+plt.xlabel('R / $\AA$', fontsize=30)
+plt.ylabel('RDF score', fontsize=30)
 
-
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
 
 ax.fill_between(
@@ -51,5 +52,5 @@ ax.fill_between(
 )
 
 ax.legend(title="Weighting", title_fontproperties={'weight': 'bold'})
-plt.savefig('../s40_RDFs.png', format='png', dpi=200)
+#plt.savefig('../s40_RDFs.png', format='png', dpi=200)
 plt.show()
