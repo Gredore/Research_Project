@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(15, 8))
 
+id = "s55"
 
-RDF_path = "../RDF_Outputs_electroneg/s40.csv"
+RDF_path = "../RDF_Outputs_electroneg/"+id+".csv"
 
 csv_ingest = np.loadtxt(RDF_path,dtype=np.float64, delimiter=',')
 rdf_values = csv_ingest[:,1]
@@ -14,7 +15,7 @@ padded_rdf2 = np.pad(rdf_values, (0, 200 - rdf_values.size), 'constant')
 ax.plot(r_values,padded_rdf2, linewidth=2, color='b', label='Electronegativity')
 
 
-RDF_path = "../RDF_Outputs_vdW/s40.csv"
+RDF_path = "../RDF_Outputs_vdW/"+id+".csv"
 
 csv_ingest = np.loadtxt(RDF_path,dtype=np.float64, delimiter=',')
 rdf_values = csv_ingest[:,1]
@@ -24,7 +25,7 @@ padded_rdf3 = np.pad(rdf_values, (0, 200 - rdf_values.size), 'constant')
 ax.plot(r_values,padded_rdf3, linewidth=2, color='g', label='VdWaals volume')
 
 
-RDF_path = "../RDF_Outputs_unit/s40.csv"
+RDF_path = "../RDF_Outputs_unit/"+id+".csv"
 
 csv_ingest = np.loadtxt(RDF_path,dtype=np.float64, delimiter=',')
 rdf_values = csv_ingest[:,1]

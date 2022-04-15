@@ -3,6 +3,7 @@ from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Conv1D, Flatten, Dropout, MaxPool1D, BatchNormalization
 from keras.callbacks import EarlyStopping
+from keras.utils.vis_utils import plot_model
 import sklearn
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import confusion_matrix
@@ -67,6 +68,8 @@ for ratio_of_dataset_to_use in [1]:
 
             model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[tfa.metrics.MatthewsCorrelationCoefficient(name="mcc", num_classes=2)])
 
+
+
             print(f'Training for fold {fold_no} ...')
 
             es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=early_stopping_patience)
@@ -75,6 +78,7 @@ for ratio_of_dataset_to_use in [1]:
             history = model.fit(X_train_RDF[train], y_train_RDF[train], validation_data=(X_train_RDF[test], y_train_RDF[test]),
                                 class_weight=class_weights_dict, epochs=epochs, verbose=0, callbacks=[es])
 
+            #print(model.summary())
 
             val_mcc_summed = val_mcc_summed + np.pad(np.array(history.history['val_mcc']), (0, epochs - len(np.array(history.history['val_mcc']))), 'constant')
 
